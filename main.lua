@@ -2,11 +2,19 @@
 
 can't fit in 1wide passages, figure out how to slim down player, i guess
 
-save outdoor(cave) permanance
+still something screwy with collision detection with obj
+
 ]]--
 
 
-
+function ReverseTable(t)
+    local reversedTable = {}
+    local itemCount = #t
+    for k, v in ipairs(t) do
+        reversedTable[itemCount + 1 - k] = v
+    end
+    return reversedTable
+end
 
 
 function table.show(arr)
@@ -42,7 +50,8 @@ function table.showcurrent(arr)
 end
 
 
-debug = false
+debug = true
+
 
 -- Timers
 -- We declare these here so we don't have to edit them multiple places
@@ -54,8 +63,8 @@ createEnemyTimer = createEnemyTimerMax
 
 -- Player Object
 player = { 
-	x = math.floor(love.graphics.getHeight()/2) + 24, 
-	y = math.floor(love.graphics.getWidth()/2) + 24, 
+	x = math.floor(love.graphics.getHeight()/2) - 24, 
+	y = math.floor(love.graphics.getWidth()/2) - 24, 
 	speed = 175, 
 	img = {
 		up = {}, 
@@ -82,14 +91,19 @@ msg = ''
 
 world = {{}}
 
-enviroBatch = {}
-
+mapBatch = {}
+objBatch = {}
 
 tiles = {}
 tiles['0'] = {img = 'assets/stone1.png', pass = false}
 tiles['1'] = {img = 'assets/black.png', pass = false}
 tiles['2'] = {img = 'assets/tile1.png', pass = true}
 tiles['3'] = {img = 'assets/sand.png', pass = true}
+tiles['4'] = {img = 'assets/shipwall1.png', pass = false}
+
+obj = {}
+obj['1'] = {img = 'assets/sprout1.png', pass = true}
+obj['2'] = {img = 'assets/pot.png', pass = false}
 
 shiploc = {}
 shiploc.x = 1
@@ -99,53 +113,49 @@ ship = {{}}
 
 ship[1][1] = {}
 ship[1][1].map = 
-'1111122211111\n'..
-'1111122211111\n'..
-'1111122211111\n'..
-'1111122211111\n'..
-'1222222222221\n'..
-'1222222222221\n'..
-'1222222222221\n'..
-'1222222222221\n'..
-'1222222222221\n'..
-'1222222222221\n'..
-'1222222222221\n'..
-'1222222222221\n'..
-'1111111111111'
+'1144444444444441111111111111111111000000000000000000\n'..
+'1142222222222241111111111111111111000000000000000000\n'..
+'1142222222222241111111111111111111000000000000000000\n'..
+'1142222222222241114444444441111111000000000000000000\n'..
+'1142222222222241114222222241111111000000000000000000\n'..
+'1144422244444441114222222241111111000000000000003333\n'..
+'1111422244444444444222222244444444333333000003333333\n'..
+'1111422222222222222222222222222222333333333333333333\n'..
+'1111422222222222222222222222222222333333333333333333\n'..
+'1111422244444444444422444444444444333333333333333333\n'..
+'4444422244444111111422411111111111000003333333000000\n'..
+'4222222222224111111422411111111111000000000000000000\n'..
+'4222222222224111444422444441111111000000000000000000\n'..
+'4222222222224111422222222241111111000000000000000000\n'..
+'4222222222224111422222222241111111000000000000000000\n'..
+'4222222222224111422222222241111111000000000000000000\n'..
+'4222222222224111422222222241111111000000000000000000\n'..
+'4222222222224111422222222241111111000000000000000000\n'..
+'4222222222224111422222222241111111000000000000000000\n'..
+'4444444444444111444444444441111111000000000000000000'
 
+ship[1][1].obj = 
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    \n'..
+'    111                                             \n'..
+'    222                                             \n'..
+'                                                    \n'..
+'                                                    \n'..
+'                                                    '
 
-ship[1][2] = {}
-ship[1][2].map = 
-'1111111111111\n'..
-'1111111111111\n'..
-'1111112222222\n'..
-'1111112222222\n'..
-'1122222222111\n'..
-'1122222222111\n'..
-'1111112222111\n'..
-'1112222222111\n'..
-'1112222222111\n'..
-'1112222222111\n'..
-'1112222222111\n'..
-'1112222222111\n'..
-'1111122211111'
-
-ship[2] = {}
-ship[2][2] = {}
-ship[2][2].map = 
-'1111111111111\n'..
-'1122222222211\n'..
-'2222222222211\n'..
-'2222222222211\n'..
-'1122222222211\n'..
-'1122222222222\n'..
-'1122222222222\n'..
-'1122222222211\n'..
-'1122222222211\n'..
-'1122222222211\n'..
-'1122222222211\n'..
-'1122222222211\n'..
-'1111111111111'
 
 world.getArea = function(x,y)
 	-- might be a better way to do this, but meh
@@ -209,23 +219,31 @@ function love.load(arg)
 	player.direction = 'down'
 
 	enemyImg = love.graphics.newImage('assets/meteor.png')
-	bulletImg = love.graphics.newImage('assets/broom.gif')
+	bulletImg = love.graphics.newImage('assets/spookyton.png')
 
 	-- load tile image data
 	for i, v in pairs(tiles) do
 		tiles[i].imgdat = love.graphics.newImage(tiles[i].img)
 	end
 
-	mapWidth = math.floor(love.graphics.getWidth()  / 48) - 1
-    mapHeight = math.floor(love.graphics.getHeight() / 48) - 1
-    local size = mapWidth * mapHeight + 25
+	for i, v in pairs(obj) do
+		obj[i].imgdat = love.graphics.newImage(obj[i].img)
+	end
+
+	-- this isn't good
+	-- but, uh... it's late.
+    local size = 1000
 
 	-- Set up a sprite batch with our single image and the max number of times we
 	-- want to be able to draw it. Later we will call spriteBatch:add() to tell
 	-- Love where we want to draw our image
 	
 	for i, v in pairs(tiles) do
-		enviroBatch[i] = love.graphics.newSpriteBatch(tiles[i].imgdat, size)
+		mapBatch[i] = love.graphics.newSpriteBatch(tiles[i].imgdat, size)
+	end
+
+	for i, v in pairs(obj) do
+		objBatch[i] = love.graphics.newSpriteBatch(obj[i].imgdat, 100)
 	end
 
 	if world.area == 'cave' then
@@ -259,8 +277,8 @@ function love.update(dt)
 
 		-- Create an enemy
 		randomNumber = math.random(10, love.graphics.getWidth() - 10)
-		newEnemy = { x = randomNumber, y = -10, img = enemyImg }
-		table.insert(enemies, newEnemy)
+		--newEnemy = { x = randomNumber, y = -10, img = enemyImg }
+		--table.insert(enemies, newEnemy)
 	end
 
 
@@ -303,43 +321,75 @@ function love.update(dt)
 	player.isMoving = false
 	if love.keyboard.isDown('left','a') then
 		player.isMoving = true
-		player.x = player.x - (player.speed*dt)
-		if player.x < 0 
-			or tiles[world.currentMap[math.floor( player.x / 48) ][math.ceil(  (player.y / 48 )  ) ]].pass == false  -- binds us to the map
-			or tiles[world.currentMap[math.floor( player.x / 48) ][math.floor(  (player.y / 48 )  ) ] ].pass == false then
-				player.x = math.ceil(player.x / player.img.left[1]:getWidth()) * player.img.left[1]:getWidth() + 1
+		world.x = world.x + (player.speed*dt)
+		if
+			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
+			or tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
+			or (
+				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+6 ] ~= ' '
+				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+6 ]].pass == false
+			)  -- binds us to the map
+			or (
+				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ] ~= ' '
+				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
+			)
+			then
+				world.x = (math.floor(world.x / 48) * 48) - 1
 		end
-		if player.x < 0 then player.x = 0 end
 		player.direction = 'left'
 	elseif love.keyboard.isDown('right','d') then
 		player.isMoving = true
-		player.x = player.x + (player.speed*dt)
-		if player.x > (love.graphics.getWidth() - player.img.left[1]:getWidth()) 
-			or tiles[world.currentMap[math.floor(player.x /  player.img.left[1]:getWidth()) + 1][math.floor(player.y / player.img.left[1]:getHeight()) ] ].pass == false
-			or tiles[world.currentMap[math.floor(player.x /  player.img.left[1]:getWidth()) + 1][math.ceil(player.y / player.img.left[1]:getHeight()) ] ].pass == false then
-				player.x = math.floor(player.x / player.img.left[1]:getWidth()) * player.img.left[1]:getWidth() - 1
+		world.x = world.x - (player.speed*dt)
+		if 
+			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+7 ][math.ceil(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
+			or tiles[world.currentMap[math.floor( (world.x*-1) / 48)+7 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
+			or (
+				world.currentObj[math.floor( (world.x*-1) / 48)+7 ][math.ceil(  (world.y*-1) / 48   )+6 ] ~= ' '
+				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+7 ][math.ceil(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
+			)
+			or (
+				world.currentObj[math.floor( (world.x*-1) / 48)+7 ][math.floor(  (world.y*-1) / 48   )+6 ] ~= ' '
+				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+7 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
+			)
+			then
+				world.x = (math.ceil(world.x / 48) * 48) + 1
 		end
-		if player.x > love.graphics.getWidth() then player.x = love.graphics.getWidth() end
 		player.direction = 'right'
 	elseif love.keyboard.isDown('up') then
 		player.isMoving = true
-		player.y = player.y - (player.speed*dt)
-		if player.y < 0 
-			or tiles[world.currentMap[math.floor(player.x / player.img.left[1]:getWidth())][math.floor(player.y /  player.img.left[1]:getHeight())] ].pass == false 
-			or tiles[world.currentMap[math.ceil(player.x / player.img.left[1]:getWidth())][math.floor(player.y /  player.img.left[1]:getHeight())] ].pass == false then
-				player.y = math.ceil(player.y / player.img.left[1]:getHeight()) * player.img.left[1]:getHeight() + 1
+		world.y = world.y + (player.speed*dt)
+		if
+			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
+			or tiles[world.currentMap[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
+			or (
+				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ] ~= ' '
+				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
+			)
+			or (
+				world.currentObj[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ] ~= ' '
+				and obj[world.currentObj[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
+			)
+			then
+				world.y = (math.floor(world.y / 48) * 48) - 1
 		end
-		if player.y < 0 then player.y = 0 end
 		player.direction = 'up'
 	elseif love.keyboard.isDown('down') then
 		player.isMoving = true
-		player.y = player.y + (player.speed*dt)
-		if player.y > (love.graphics.getHeight() - player.img.left[1]:getHeight()) 
-			or tiles[world.currentMap[math.floor(player.x / player.img.left[1]:getWidth())][math.floor(player.y /  player.img.left[1]:getHeight()) + 1] ].pass == false
-			or tiles[world.currentMap[math.ceil(player.x / player.img.left[1]:getWidth())][math.floor(player.y /  player.img.left[1]:getHeight()) + 1] ].pass == false then
-				player.y = math.floor(player.y / 48) * 48 - 1
-		end 
-		if player.y + player.img.left[1]:getHeight() > love.graphics.getHeight() then player.y = love.graphics.getHeight() end
+		world.y = world.y - (player.speed*dt)
+		if 
+			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false  -- binds us to the map
+			or tiles[world.currentMap[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false 
+			or (
+				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+7 ] ~= ' '
+				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+7 ]].pass == false  -- binds us to the map
+			)
+			or (
+				world.currentObj[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ] ~= ' '
+				and obj[world.currentObj[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false 
+			)
+			then
+				world.y = (math.ceil(world.y / 48) * 48) + 1
+		end
 		player.direction = 'down'
 	end
 
@@ -424,12 +474,20 @@ end
 
 -- Drawing
 function love.draw(dt)
-	love.graphics.setBackgroundColor(148,140,43)
+	love.graphics.setBackgroundColor(0,0,0)
 
 
-    for key,value in pairs(enviroBatch) do
-       love.graphics.draw(enviroBatch[key])
+    for key,value in pairs(mapBatch) do
+       love.graphics.draw(mapBatch[key])
     end
+
+
+
+    for key,value in pairs(objBatch) do
+       love.graphics.draw(objBatch[key])
+    end
+--????
+
 
 	for i, bullet in ipairs(bullets) do
 		love.graphics.draw(bullet.img, bullet.x, bullet.y)

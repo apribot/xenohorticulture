@@ -2,22 +2,22 @@ cave = {}
 cave.wallheight = 10
 
 cave.MakeCaverns = function() 
-    for key,value in pairs(enviroBatch) do
-       enviroBatch[key]:clear()
+    for key,value in pairs(mapBatch) do
+       mapBatch[key]:clear()
     end
 
 	cave.RandomFillmap()
     for itteration = 0,  maxitteration,  1 do
-        for row = 0,  mapHeight,  1 do
-            for column = 0,  mapWidth,  1 do
+        for row = 0,  world.mapHeight,  1 do
+            for column = 0,  world.mapWidth,  1 do
                 world.currentMap[column][row] = cave.PlaceWallLogic(column, row) 
             end
         end
     end
 
     if world.maps[world.pos - 1] then
-    	for row = 0, mapHeight, 1 do
-    		world.currentMap[0][row] = world.maps[world.pos - 1][mapWidth][row]
+    	for row = 0, world.mapHeight, 1 do
+    		world.currentMap[0][row] = world.maps[world.pos - 1][world.mapWidth][row]
     	end
     end
 end
@@ -27,18 +27,18 @@ cave.RandomFillmap = function()
     local mapMiddle = 0 
     local column = 0
     local row = 0
-    for column = 0,  mapWidth,  1 do
+    for column = 0,  world.mapWidth,  1 do
         -- add new dimension
         world.currentMap[column] = {}
-        mapMiddle = (mapHeight / 2) 
-        for row = 0,  mapHeight,  1 do 
+        mapMiddle = (world.mapHeight / 2) 
+        for row = 0,  world.mapHeight,  1 do 
             if column == 0 and row >= mapMiddle + 5 and row <= mapMiddle - 5 then
                 world.currentMap[column][row] = '0' 
             elseif row == 0 then
                 world.currentMap[column][row] = '0' 
-            elseif column == mapWidth - 1 and row >= mapMiddle + 5 and row <= mapMiddle - 5 then
+            elseif column == world.mapWidth - 1 and row >= mapMiddle + 5 and row <= mapMiddle - 5 then
                 world.currentMap[column][row] = '0' 
-            elseif row == mapHeight then
+            elseif row == world.mapHeight then
                 world.currentMap[column][row] = '0' 
             -- Else, fill with a wall a random percent of the time 
             else 
@@ -88,7 +88,6 @@ cave.GetAdjacentWalls = function(x, y, scopeX, scopeY)
 
     for iY = startY,  endY,  1 do
         for iX = startX, endX, 1 do
-        -- WHAT THE FUCK
             if iX ~= x or iY ~= y then
                 if cave.IsWall(iX, iY) then
                     wallCounter = wallCounter + 1
@@ -116,7 +115,7 @@ end
 cave.IsOutOfBounds = function(x, y) 
     if x < 0 or y < 0 then
         return true 
-    elseif x > mapWidth or y > mapHeight then
+    elseif x > world.mapWidth or y > world.mapHeight then
         return true 
     end
     return false 
@@ -126,10 +125,10 @@ end
 
 cave.getStartPos = function() 
     local pos = {}
-    for x = 2,  mapWidth,  1 do
-        if world.currentMap[x][math.floor(mapHeight / 2)] == 2 then
+    for x = 2,  world.mapWidth,  1 do
+        if world.currentMap[x][math.floor(world.mapHeight / 2)] == 2 then
             pos['x'] = x 
-            pos['y'] = math.floor(mapHeight / 2) 
+            pos['y'] = math.floor(world.mapHeight / 2) 
             return pos 
         end
     end
@@ -137,10 +136,10 @@ end
 
 cave.getStartPosR = function() 
     local pos = {}
-    for x = mapWidth - 2, 2, 1 do
-        if world.currentMap[x][math.floor(mapHeight / 2)] == 2 then
+    for x = world.mapWidth - 2, 2, 1 do
+        if world.currentMap[x][math.floor(world.mapHeight / 2)] == 2 then
             pos['x'] = x 
-            pos['y'] = math.floor(mapHeight / 2) 
+            pos['y'] = math.floor(world.mapHeight / 2) 
             return pos 
         end
     end
@@ -149,8 +148,8 @@ end
 cave.getRandPos = function() 
     local pos = {}
     local i = 0 
-    for x = 0, mapWidth, 1 do
-        for y = 0, mapHeight, 1 do
+    for x = 0, world.mapWidth, 1 do
+        for y = 0, world.mapHeight, 1 do
             if world.currentMap[x][y] == 2 then
                 pos[i] = {}
                 pos[i]['x'] = x 
