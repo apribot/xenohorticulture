@@ -2,7 +2,11 @@
 
 can't fit in 1wide passages, figure out how to slim down player, i guess
 
-still something screwy with collision detection with obj
+create interaction key trapping and logic/framework
+and dialog function
+include interaction along with the uh img maybe
+
+create inventory system
 
 ]]--
 
@@ -100,10 +104,11 @@ tiles['1'] = {img = 'assets/black.png', pass = false}
 tiles['2'] = {img = 'assets/tile1.png', pass = true}
 tiles['3'] = {img = 'assets/sand.png', pass = true}
 tiles['4'] = {img = 'assets/shipwall1.png', pass = false}
+tiles['5'] = {img = 'assets/pot.png', pass = false}
 
 obj = {}
 obj['1'] = {img = 'assets/sprout1.png', pass = true}
-obj['2'] = {img = 'assets/pot.png', pass = false}
+
 
 shiploc = {}
 shiploc.x = 1
@@ -128,11 +133,12 @@ ship[1][1].map =
 '4222222222224111444422444441111111000000000000000000\n'..
 '4222222222224111422222222241111111000000000000000000\n'..
 '4222222222224111422222222241111111000000000000000000\n'..
-'4222222222224111422222222241111111000000000000000000\n'..
-'4222222222224111422222222241111111000000000000000000\n'..
-'4222222222224111422222222241111111000000000000000000\n'..
+'4222525252224111422222222241111111000000000000000000\n'..
+'4222525252224111422222222241111111000000000000000000\n'..
+'4222525252224111422222222241111111000000000000000000\n'..
 '4222222222224111422222222241111111000000000000000000\n'..
 '4444444444444111444444444441111111000000000000000000'
+
 
 ship[1][1].obj = 
 '                                                    \n'..
@@ -150,9 +156,9 @@ ship[1][1].obj =
 '                                                    \n'..
 '                                                    \n'..
 '                                                    \n'..
-'    111                                             \n'..
-'    222                                             \n'..
-'                                                    \n'..
+'    1 1 1                                           \n'..
+'    1 1 1                                           \n'..
+'    1 1 1                                           \n'..
 '                                                    \n'..
 '                                                    '
 
@@ -380,8 +386,8 @@ function love.update(dt)
 			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false  -- binds us to the map
 			or tiles[world.currentMap[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false 
 			or (
-				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+7 ] ~= ' '
-				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+7 ]].pass == false  -- binds us to the map
+				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ] ~= ' '
+				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false  -- binds us to the map
 			)
 			or (
 				world.currentObj[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ] ~= ' '
