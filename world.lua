@@ -100,14 +100,15 @@ end
 
 
 world.printmap = function() 
+	local mesh = nil
 	for key,value in pairs(mapBatch) do
        mapBatch[key]:clear()
     end
     for key,value in pairs(objBatch) do
        objBatch[key]:clear()
     end
-    for y = 0, world.mapHeight - 1,  1 do
-        for x = 0,  world.mapWidth - 1, 1 do 
+    for y = 0, world.mapHeight - 1, 1 do
+        for x = 0, world.mapWidth - 1, 1 do 
             local xPos = (x * 48) + world.x
             local yPos = (y * 48) + world.y
             if 
@@ -117,8 +118,12 @@ world.printmap = function()
             	and yPos > -48
             	then
             		--print('x:' .. x .. '|y:'..y..'|mapchar:' .. world.currentMap[x][y] .. '|xPos:' .. xPos .. '|yPos:'..yPos)
+            		--if tiles[world.currentMap[x][y]].raised == true then
+           			--	mapBatch[world.currentMap[x][y]]:add(xPos-8, yPos-8)
+           			--else
+           				mapBatch[world.currentMap[x][y]]:add(xPos, yPos)
+					--end
 
-            		mapBatch[world.currentMap[x][y]]:add(xPos, yPos)
             		if world.currentObj[x][y] ~= ' ' then 
             			objBatch[world.currentObj[x][y]]:add(xPos, yPos)
             		end

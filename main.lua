@@ -8,6 +8,10 @@ include interaction along with the uh img maybe
 
 create inventory system
 
+add multi direction key moving player.direction.left = true, etc for diagonal moving and wall sliding
+maybe put all collision into a more efficient function instead of that horrible if/else block
+
+save position on quit
 ]]--
 
 
@@ -69,7 +73,7 @@ createEnemyTimer = createEnemyTimerMax
 player = { 
 	x = math.floor(love.graphics.getHeight()/2) - 24, 
 	y = math.floor(love.graphics.getWidth()/2) - 24, 
-	speed = 175, 
+	speed = 400, 
 	img = {
 		up = {}, 
 		down = {}, 
@@ -99,16 +103,21 @@ mapBatch = {}
 objBatch = {}
 
 tiles = {}
-tiles['0'] = {img = 'assets/stone1.png', pass = false}
-tiles['1'] = {img = 'assets/black.png', pass = false}
-tiles['2'] = {img = 'assets/tile1.png', pass = true}
-tiles['3'] = {img = 'assets/sand.png', pass = true}
-tiles['4'] = {img = 'assets/shipwall1.png', pass = false}
-tiles['5'] = {img = 'assets/pot.png', pass = false}
+tiles['0'] = {img = 'assets/stone1.png', pass = false, raised = false}
+tiles['1'] = {img = 'assets/black.png', pass = false, raised = false}
+tiles['2'] = {img = 'assets/tile1.png', pass = true, raised = false}
+tiles['3'] = {img = 'assets/sand.png', pass = true, raised = false}
+tiles['4'] = {img = 'assets/shipwall1.png', pass = false, raised = true}
+tiles['5'] = {img = 'assets/pot.png', pass = false, raised = false}
+tiles['6'] = {img = 'assets/shipdoorwall.png', pass=false, raised = true}
+tiles['7'] = {img = 'assets/shipdoortrack.png', pass=true, raised = false}
+tiles['8'] = {img = 'assets/tile2.png', pass = true, raised = false}
+
 
 obj = {}
 obj['1'] = {img = 'assets/sprout1.png', pass = true}
-
+obj['2'] = {img = 'assets/sprout2.png', pass = true}
+obj['3'] = {img = 'assets/spookyton.png', pass = true}
 
 shiploc = {}
 shiploc.x = 1
@@ -118,49 +127,59 @@ ship = {{}}
 
 ship[1][1] = {}
 ship[1][1].map = 
-'1144444444444441111111111111111111000000000000000000\n'..
-'1142222222222241111111111111111111000000000000000000\n'..
-'1142222222222241111111111111111111000000000000000000\n'..
-'1142222222222241114444444441111111000000000000000000\n'..
-'1142222222222241114222222241111111000000000000000000\n'..
-'1144422244444441114222222241111111000000000000003333\n'..
-'1111422244444444444222222244444444333333000003333333\n'..
-'1111422222222222222222222222222222333333333333333333\n'..
-'1111422222222222222222222222222222333333333333333333\n'..
-'1111422244444444444422444444444444333333333333333333\n'..
-'4444422244444111111422411111111111000003333333000000\n'..
-'4222222222224111111422411111111111000000000000000000\n'..
-'4222222222224111444422444441111111000000000000000000\n'..
-'4222222222224111422222222241111111000000000000000000\n'..
-'4222222222224111422222222241111111000000000000000000\n'..
-'4222525252224111422222222241111111000000000000000000\n'..
-'4222525252224111422222222241111111000000000000000000\n'..
-'4222525252224111422222222241111111000000000000000000\n'..
-'4222222222224111422222222241111111000000000000000000\n'..
-'4444444444444111444444444441111111000000000000000000'
+'1111111111111144444444444441111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1111111111111142222222222241111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1111111111111142888888888241111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1114444444441142888888888241111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1114222222241142288822222241111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1114288888241144488844444441111111400000000000000333333333333333333333333333333333333333333333333333333330\n'..
+'1114288888244444488844444444444444633333300000333333333333333333333333333333333333333333333333333333333330\n'..
+'1114288888888888888888888888888888733333333333333333333333333333333333333333333333333333333333333333333330\n'..
+'1114288888888888888888888888888888733333333333333333333333333333333333333333333333333333333333333333333330\n'..
+'1114488444444444488844444444444444633333333333333333333333333333333333333333333333333333333333333333333330\n'..
+'1111488411114444488844444111111111400000333333300000000000000000000000000000000000000000000000000000000000\n'..
+'1111488411114222288822224111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1444488444444288888888824111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1422288222244288585858824111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1428888888244288888888824111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1428888888888888585858824111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1428888888888888888888824111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1428888888244288585858824111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1422222222244288888888824111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1444444444444444444444444111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1111111111111111111111111111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1111111111111111111111111111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1111111111111111111111111111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1111111111111111111111111111111111400000000000000000000000000000000000000000000000000000000000000000000000\n'..
+'1111111111111111111111111111111111400000000000000000000000000000000000000000000000000000000000000000000000'
 
 
 ship[1][1].obj = 
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'                                                    \n'..
-'    1 1 1                                           \n'..
-'    1 1 1                                           \n'..
-'    1 1 1                                           \n'..
-'                                                    \n'..
-'                                                    '
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                             3                            \n'..
+'                                     111                                                                  \n'..
+'                                      11      1              1111                                         \n'..
+'                                          1  111           1111 11                                        \n'..
+'                                                            1                                             \n'..
+'                                            2                                                             \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                1 2 1                                                                                     \n'..
+'                                                                                                          \n'..
+'                2 2 1                                                                                     \n'..
+'                                                                                                          \n'..
+'                1 1 1                                                                                     \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                                                          \n'..
+'                                                                                                          '
 
 
 world.getArea = function(x,y)
@@ -214,6 +233,7 @@ require "cave"
 
 -- Loading
 function love.load(arg)
+
 	player.img.up[1] = love.graphics.newImage('assets/space_b1.png')
 	player.img.up[2] = love.graphics.newImage('assets/space_b2.png')
 	player.img.down[1] = love.graphics.newImage('assets/space_f1.png')
@@ -329,9 +349,9 @@ function love.update(dt)
 		player.isMoving = true
 		world.x = world.x + (player.speed*dt)
 		if
-			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
-			or tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
-			or (
+			tiles[world.currentMap[math.floor( ((world.x - 5)*-1) / 48)+6 ][math.ceil(  ((world.y+5)*-1) / 48   )+6 ]].pass == false  -- binds us to the map
+			or tiles[world.currentMap[math.floor( ((world.x - 5)*-1) / 48)+6 ][math.floor(  ((world.y-5)*-1) / 48   )+6 ]].pass == false 
+			or ( 
 				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+6 ] ~= ' '
 				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.ceil(  (world.y*-1) / 48   )+6 ]].pass == false
 			)  -- binds us to the map
@@ -340,15 +360,16 @@ function love.update(dt)
 				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
 			)
 			then
-				world.x = (math.floor(world.x / 48) * 48) - 1
+				world.x = (math.floor((world.x+5) / 48) * 48) + 5
 		end
 		player.direction = 'left'
-	elseif love.keyboard.isDown('right','d') then
+	end
+	if love.keyboard.isDown('right','d') then
 		player.isMoving = true
 		world.x = world.x - (player.speed*dt)
 		if 
-			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+7 ][math.ceil(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
-			or tiles[world.currentMap[math.floor( (world.x*-1) / 48)+7 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
+			tiles[world.currentMap[math.floor( ((world.x + 5)*-1) / 48)+7 ][math.ceil(  ((world.y + 5)*-1) / 48   )+6 ]].pass == false  -- binds us to the map
+			or tiles[world.currentMap[math.floor( ((world.x + 5)*-1) / 48)+7 ][math.floor(  ((world.y - 5)*-1) / 48   )+6 ]].pass == false 
 			or (
 				world.currentObj[math.floor( (world.x*-1) / 48)+7 ][math.ceil(  (world.y*-1) / 48   )+6 ] ~= ' '
 				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+7 ][math.ceil(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
@@ -358,15 +379,16 @@ function love.update(dt)
 				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+7 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
 			)
 			then
-				world.x = (math.ceil(world.x / 48) * 48) + 1
+				world.x = (math.ceil((world.x - 5) / 48) * 48) -5
 		end
 		player.direction = 'right'
-	elseif love.keyboard.isDown('up') then
+	end
+	if love.keyboard.isDown('up') then
 		player.isMoving = true
 		world.y = world.y + (player.speed*dt)
 		if
-			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
-			or tiles[world.currentMap[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
+			tiles[world.currentMap[math.floor( ((world.x - 5)*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
+			or tiles[world.currentMap[math.ceil( ((world.x + 5)*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
 			or (
 				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ] ~= ' '
 				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false  -- binds us to the map
@@ -376,25 +398,26 @@ function love.update(dt)
 				and obj[world.currentObj[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+6 ]].pass == false 
 			)
 			then
-				world.y = (math.floor(world.y / 48) * 48) - 1
+				world.y = (math.floor( (world.y + 5) / 48) * 48) 
 		end
 		player.direction = 'up'
-	elseif love.keyboard.isDown('down') then
+	end
+	if love.keyboard.isDown('down') then
 		player.isMoving = true
 		world.y = world.y - (player.speed*dt)
 		if 
-			tiles[world.currentMap[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false  -- binds us to the map
-			or tiles[world.currentMap[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false 
+			tiles[world.currentMap[math.floor( ((world.x - 5)*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false  -- binds us to the map
+			or tiles[world.currentMap[math.ceil( ((world.x + 5)*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false 
 			or (
 				world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ] ~= ' '
 				and obj[world.currentObj[math.floor( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false  -- binds us to the map
 			)
 			or (
-				world.currentObj[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ] ~= ' '
-				and obj[world.currentObj[math.ceil( (world.x*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false 
+				world.currentObj[math.ceil( ((world.x + 5)*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ] ~= ' '
+				and obj[world.currentObj[math.ceil( ((world.x + 5)*-1) / 48)+6 ][math.floor(  (world.y*-1) / 48   )+7 ]].pass == false 
 			)
 			then
-				world.y = (math.ceil(world.y / 48) * 48) + 1
+				world.y = (math.ceil((world.y-5) / 48) * 48)
 		end
 		player.direction = 'down'
 	end
