@@ -118,6 +118,10 @@ obj = {}
 obj['1'] = {img = 'assets/sprout1.png', pass = true}
 obj['2'] = {img = 'assets/sprout2.png', pass = true}
 obj['3'] = {img = 'assets/spookyton.png', pass = true}
+obj['4'] = {img = 'assets/peep.png', pass = false}
+obj['5'] = {img = 'assets/pyramidcat.png', pass = true}
+obj['6'] = {img = 'assets/rockly.png', pass = true}
+obj['.'] = {img = 'assets/blank.png', pass = true}
 
 shiploc = {}
 shiploc.x = 1
@@ -160,11 +164,11 @@ ship[1][1].obj =
 '                                                                                                          \n'..
 '                                                                                                          \n'..
 '                                                                                                          \n'..
-'                                                                             3                            \n'..
-'                                     111                                                                  \n'..
-'                                      11      1              1111                                         \n'..
-'                                          1  111           1111 11                                        \n'..
-'                                                            1                                             \n'..
+'                                                                             3.                           \n'..
+'                                     111                                     ...                          \n'..
+'                                      11      1              1111            ...                          \n'..
+'                                     6    14 111           1111 11           ...                          \n'..
+'                                        5                   1                                             \n'..
 '                                            2                                                             \n'..
 '                                                                                                          \n'..
 '                                                                                                          \n'..
